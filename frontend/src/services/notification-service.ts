@@ -4,7 +4,7 @@ import { Notyf } from 'notyf';
 @Injectable({
   providedIn: 'root'
 })
-export class Notification {
+export class NotificationService {
   private notyf = new Notyf({
     duration: 3000,
     position: { x: 'right', y: 'top' }

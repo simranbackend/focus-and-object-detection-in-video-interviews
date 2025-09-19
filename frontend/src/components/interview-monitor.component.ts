@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProctoringService, DetectionEvent, ProctoringSession } from '../services/proctoring.service';
 import { VideoRecordingService } from '../services/video-recording.service';
+import { NotificationService } from '../services/notification-service';
 
 @Component({
   selector: 'app-interview-monitor',
@@ -34,7 +35,7 @@ import { VideoRecordingService } from '../services/video-recording.service';
                 *ngIf="!isSessionActive" 
                 class="btn btn-primary"
                 (click)="startInterview()"
-                [disabled]="!candidateName.trim()">
+                >
                 <span class="status-dot"></span>
                 Start Interview
               </button>
@@ -540,7 +541,8 @@ export class InterviewMonitorComponent implements OnInit, OnDestroy, AfterViewIn
 
   constructor(
     private proctoringService: ProctoringService,
-    private videoRecordingService: VideoRecordingService
+    private videoRecordingService: VideoRecordingService,
+    private notify: NotificationService
   ) {}
 
   async ngOnInit() {
@@ -549,7 +551,7 @@ export class InterviewMonitorComponent implements OnInit, OnDestroy, AfterViewIn
       console.log('Proctoring service initialized');
     } catch (error) {
       console.error('Failed to initialize proctoring service:', error);
-      alert('Failed to initialize monitoring system. Please refresh and try again.');
+      this.notify.error('Failed to initialize monitoring system. Please refresh and try again.');
     }
   }
 
@@ -562,7 +564,11 @@ export class InterviewMonitorComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   async startInterview() {
-    if (!this.candidateName.trim()) return;
+    
+    if (!this.candidateName.trim()) {
+      this.notify.error('Candidate name is required');
+      return;
+    }
     
     try {
       // Start video recording
@@ -583,9 +589,10 @@ export class InterviewMonitorComponent implements OnInit, OnDestroy, AfterViewIn
       this.startTimer();
       
       console.log('Interview started for:', this.candidateName);
+      this.notify.success('Interview started successfully!');
     } catch (error) {
       console.error('Failed to start interview:', error);
-      alert('Failed to start interview. Please check camera permissions.');
+      this.notify.error('Could not access camera. Allow permissions and retry.');
     }
   }
 
@@ -601,8 +608,10 @@ export class InterviewMonitorComponent implements OnInit, OnDestroy, AfterViewIn
       this.cleanup();
       
       console.log('Interview ended. Final score:', this.completedSession?.integrityScore);
+      this.notify.success('Interview ended. Report ready.');
     } catch (error) {
       console.error('Failed to end interview:', error);
+      this.notify.error('Error ending interview');
     }
   }
 

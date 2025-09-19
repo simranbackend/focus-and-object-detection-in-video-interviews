@@ -147,6 +147,7 @@ export class ProctoringService {
         const face = faces[0];
         if (face.keypoints) {
           const isLookingAway = this.analyzeFocusDirection(face.keypoints);
+          console.log("isLookingAway", isLookingAway);
           
           if (isLookingAway) {
             if (!this.focusTimer) {
@@ -199,29 +200,36 @@ export class ProctoringService {
   }
   
   private analyzeFocusDirection(keypoints: any[]): boolean {
-    // Simplified gaze detection based on eye landmarks
-    // In a production system, this would be more sophisticated
     try {
       const leftEye = keypoints.slice(33, 42);
       const rightEye = keypoints.slice(362, 371);
       const nose = keypoints[1];
-      
-      // Basic heuristic: if nose is significantly off-center relative to eyes
-      if (leftEye.length > 0 && rightEye.length > 0 && nose) {
-        const eyeCenter = {
-          x: (leftEye[0].x + rightEye[0].x) / 2,
-          y: (leftEye[0].y + rightEye[0].y) / 2
+  
+      if (leftEye.length && rightEye.length && nose) {
+        const getEyeCenter = (eye: any[]) => {
+          const sum = eye.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+          return { x: sum.x / eye.length, y: sum.y / eye.length };
         };
-        
+  
+        const leftEyeCenter = getEyeCenter(leftEye);
+        const rightEyeCenter = getEyeCenter(rightEye);
+  
+        const eyeCenter = {
+          x: (leftEyeCenter.x + rightEyeCenter.x) / 2,
+          y: (leftEyeCenter.y + rightEyeCenter.y) / 2
+        };
+  
         const noseOffset = Math.abs(nose.x - eyeCenter.x);
-        return noseOffset > 50; // Threshold for "looking away"
+        const faceWidth = Math.abs(rightEyeCenter.x - leftEyeCenter.x);
+  
+        return noseOffset > faceWidth * 0.25; // Adjust threshold
       }
     } catch (error) {
       console.error('Error analyzing focus direction:', error);
     }
-    
+  
     return false;
-  }
+  }  
   
   private createEvent(
     type: DetectionEvent['type'],
