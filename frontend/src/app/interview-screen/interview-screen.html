@@ -1,0 +1,163 @@
+<div class="interview-container">
+    <!-- Header -->
+    <header class="interview-header card">
+        <div class="header-content">
+            <h1>Video Proctoring System</h1>
+            <div class="session-info">
+                <span *ngIf="candidateName">Candidate: <strong>{{ candidateName }}</strong></span>
+                <div class="integrity-score" [class]="getScoreClass()">
+                    Integrity Score: {{ integrityScore }}/100
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Video Section -->
+        <section class="video-section card">
+            <div class="video-header">
+                <h2>Live Interview Feed</h2>
+                <div class="video-controls">
+                    <button *ngIf="!isSessionActive" class="btn btn-primary" (click)="startInterview()"
+                        [disabled]="!candidateName.trim()">
+                        <span class="status-dot"></span>
+                        Start Interview
+                    </button>
+                    <button *ngIf="isSessionActive" class="btn btn-danger" (click)="endInterview()">
+                        <span class="status-dot"></span>
+                        End Interview
+                    </button>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <video #videoElement autoplay muted playsinline class="candidate-video">
+                </video>
+                <div class="video-overlay" *ngIf="isSessionActive">
+                    <div class="recording-indicator pulse">
+                        <span class="status-dot"></span>
+                        RECORDING
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidate Info Input -->
+            <div class="candidate-input" *ngIf="!isSessionActive">
+                <label for="candidateName">Candidate Name:</label>
+                <input id="candidateName" type="text" [(ngModel)]="candidateName" placeholder="Enter candidate name"
+                    class="form-input">
+            </div>
+        </section>
+
+        <!-- Monitoring Dashboard -->
+        <section class="monitoring-section card">
+            <h2>Real-time Monitoring</h2>
+
+            <!-- Status Indicators -->
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Face Detection:</span>
+                    <span class="status-indicator" [class]="getFaceStatus().class">
+                        <span class="status-dot"></span>
+                        {{ getFaceStatus().text }}
+                    </span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Focus Status:</span>
+                    <span class="status-indicator" [class]="getFocusStatus().class">
+                        <span class="status-dot"></span>
+                        {{ getFocusStatus().text }}
+                    </span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Object Detection:</span>
+                    <span class="status-indicator" [class]="getObjectStatus().class">
+                        <span class="status-dot"></span>
+                        {{ getObjectStatus().text }}
+                    </span>
+                </div>
+
+                <div class="status-item">
+                    <span class="status-label">Session Duration:</span>
+                    <span class="session-timer">{{ getSessionDuration() }}</span>
+                </div>
+            </div>
+
+            <!-- Event Counts -->
+            <div class="event-summary" *ngIf="isSessionActive">
+                <h3>Violation Summary</h3>
+                <div class="event-counts">
+                    <div class="event-count">
+                        <span class="count">{{ eventCounts['focus_loss'] || 0 }}</span>
+                        <span class="label">Focus Loss</span>
+                    </div>
+                    <div class="event-count">
+                        <span class="count">{{ eventCounts['face_missing'] || 0 }}</span>
+                        <span class="label">Face Missing</span>
+                    </div>
+                    <div class="event-count">
+                        <span class="count">{{ eventCounts['multiple_faces'] || 0 }}</span>
+                        <span class="label">Multiple Faces</span>
+                    </div>
+                    <div class="event-count">
+                        <span class="count">{{ eventCounts['unauthorized_object'] || 0 }}</span>
+                        <span class="label">Unauthorized Objects</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Recent Events -->
+    <section class="events-section card" *ngIf="recentEvents.length > 0">
+        <h2>Recent Alerts</h2>
+        <div class="events-list">
+            <div *ngFor="let event of recentEvents.slice(-5).reverse()" class="event-item fade-in"
+                [class]="'severity-' + event.severity">
+                <div class="event-icon">!</div>
+                <div class="event-content">
+                    <div class="event-description">{{ event.description }}</div>
+                    <div class="event-time">{{ formatTime(event.timestamp) }}</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final Report -->
+    <section class="report-section card" *ngIf="completedSession">
+        <h2>Interview Report</h2>
+        <div class="report-content">
+            <div class="report-header">
+                <h3>{{ completedSession.candidateName }}</h3>
+                <div class="report-meta">
+                    <span>Duration: {{ getReportDuration() }}</span>
+                    <span>Final Score: {{ completedSession.integrityScore }}/100</span>
+                </div>
+            </div>
+
+            <div class="report-summary">
+                <div class="summary-item">
+                    <strong>Total Violations:</strong> {{ completedSession.events.length }}
+                </div>
+                <div class="summary-item">
+                    <strong>Severity Breakdown:</strong>
+                    <span>High: {{ getViolationsBySeverity('high') }}</span>
+                    <span>Medium: {{ getViolationsBySeverity('medium') }}</span>
+                    <span>Low: {{ getViolationsBySeverity('low') }}</span>
+                </div>
+            </div>
+
+            <div class="report-actions">
+                <button class="btn btn-primary" (click)="downloadReport()">
+                    Download Report
+                </button>
+                <button class="btn btn-secondary" (click)="downloadRecording()" [disabled]="!recordedVideo">
+                    Download Recording
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
